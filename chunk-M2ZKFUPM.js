@@ -1,0 +1,1 @@
+import{k as i,la as c,v as a}from"./chunk-UOSX25OP.js";var u=(()=>{class t{constructor(){this._count=a(0),this.isLoading=c(()=>this._count()>0)}start(){this._count.update(o=>o+1)}stop(){this._count.update(o=>Math.max(0,o-1))}static{this.\u0275fac=function(n){return new(n||t)}}static{this.\u0275prov=i({token:t,factory:t.\u0275fac,providedIn:"root"})}}return t})();export{u as a};
