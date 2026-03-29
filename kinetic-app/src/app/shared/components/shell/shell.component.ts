@@ -12,19 +12,22 @@ import { ApiService } from '../../../services/api.service';
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   template: `
-    <!-- ── Global loader: top bar + full blocking overlay ── -->
+    <!-- ── Global loader: centered full-page overlay ── -->
     @if (loader.isLoading()) {
-      <!-- Transparent full-screen overlay — blocks all clicks, shows wait cursor -->
-      <div class="fixed inset-0 z-[490] cursor-wait"
+      <!-- Full-screen overlay with backdrop blur -->
+      <div class="fixed inset-0 z-[490] bg-surface/80 backdrop-blur-sm flex items-center justify-center"
            style="pointer-events:all"
            (click)="$event.stopPropagation()"
            (mousedown)="$event.preventDefault()"
-           (touchstart)="$event.preventDefault()"></div>
-      <!-- Animated top progress bar -->
-      <div class="fixed top-0 left-0 right-0 z-[500] h-[3px] bg-primary/10 overflow-hidden pointer-events-none">
-        <div class="k-loader-bar"></div>
+           (touchstart)="$event.preventDefault()">
+        <!-- Colorful rings loader -->
+        <svg class="pl" viewBox="0 0 240 240" width="240" height="240">
+          <circle class="pl__ring pl__ring--a" cx="120" cy="120" r="105" fill="none" stroke="#000" stroke-width="20" stroke-dasharray="0 660" stroke-dashoffset="-330" stroke-linecap="round"></circle>
+          <circle class="pl__ring pl__ring--b" cx="120" cy="120" r="35" fill="none" stroke="#000" stroke-width="20" stroke-dasharray="0 220" stroke-dashoffset="-110" stroke-linecap="round"></circle>
+          <circle class="pl__ring pl__ring--c" cx="85" cy="120" r="70" fill="none" stroke="#000" stroke-width="20" stroke-dasharray="0 440" stroke-linecap="round"></circle>
+          <circle class="pl__ring pl__ring--d" cx="155" cy="120" r="70" fill="none" stroke="#000" stroke-width="20" stroke-dasharray="0 440" stroke-linecap="round"></circle>
+        </svg>
       </div>
-      <!-- Topbar spinner indicator -->
     }
 
     <!-- ── Today's tasks toaster ── -->
@@ -126,12 +129,6 @@ import { ApiService } from '../../../services/api.service';
               <span class="material-symbols-outlined">menu</span>
             </button>
             <span class="text-lg font-semibold tracking-tight text-slate-900 hidden sm:block">The Kinetic Editorial</span>
-            @if (loader.isLoading()) {
-              <div class="flex items-center gap-1.5 text-primary text-xs font-medium animate-pulse">
-                <span class="material-symbols-outlined text-base animate-spin" style="animation-duration:1s">progress_activity</span>
-                <span class="hidden md:inline">Loading…</span>
-              </div>
-            }
           </div>
           <div class="flex items-center gap-3">
             <span class="text-sm text-slate-500 hidden md:block">{{ auth.currentUser()?.display_name }}</span>
