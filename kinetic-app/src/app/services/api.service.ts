@@ -5,7 +5,9 @@ import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   ApiResponse, SessionUser, UserProjectPermission, Masters,
-  Project, ProjectArtifact, TaskArtifact, Task, DashboardData, ProjectFormData
+  Project, ProjectArtifact, TaskArtifact, Task, DashboardData, ProjectFormData,
+  PermissionCode, UserProjectMapping, Role, Permission, RolePermissionMapping,
+  UserOption
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -45,7 +47,7 @@ export class ApiService {
     );
   }
 
-  // ─── Auth ────────────────────────────────────────────────────────────────────
+  // ─── Auth (Legacy) ─────────────────────────────────────────────────────────────
 
   login(username: string, password: string) {
     // Pass as direct URL params — most reliable for GAS, avoids JSON parsing issues
@@ -54,6 +56,68 @@ export class ApiService {
 
   getUserPermissions(userId: string) {
     return this.call<UserProjectPermission[]>('getUserPermissions', { user_id: userId });
+  }
+
+  // ─── RBAC Auth ───────────────────────────────────────────────────────────────
+
+  loginWithRBAC(username: string, password: string) {
+    // New RBAC login that returns user + permissions + project assignments
+    return this.call<{ 
+      user: SessionUser; 
+      permissions: PermissionCode[]; 
+      projects: UserProjectMapping[] 
+    }>('loginWithRBAC', { username, password });
+  }
+
+  // ─── RBAC: Roles ───────────────────────────────────────────────────────────────
+
+  getRoles() {
+    return this.call<Role[]>('getRoles');
+  }
+
+  createRole(data: Omit<Role, 'role_id'>) {
+    return this.call<Role>('createRole', {}, data);
+  }
+
+  updateRole(roleId: string, data: Partial<Role>) {
+    return this.call<{ message: string }>('updateRole', { role_id: roleId }, data);
+  }
+
+  deleteRole(roleId: string) {
+    return this.call<{ message: string }>('deleteRole', { role_id: roleId });
+  }
+
+  // ─── RBAC: Permissions ─────────────────────────────────────────────────────────
+
+  getPermissions() {
+    return this.call<Permission[]>('getPermissions');
+  }
+
+  // ─── RBAC: Role-Permission Mapping ─────────────────────────────────────────────
+
+  getRolePermissions(roleId: string) {
+    return this.call<RolePermissionMapping[]>('getRolePermissions', { role_id: roleId });
+  }
+
+  updateRolePermissions(roleId: string, permissionCodes: PermissionCode[]) {
+    return this.call<{ message: string }>('updateRolePermissions', { role_id: roleId }, { permissions: permissionCodes });
+  }
+
+  // ─── RBAC: User Project Assignment ─────────────────────────────────────────────
+
+  getUserProjects(userId: string) {
+    return this.call<UserProjectMapping[]>('getUserProjects', { user_id: userId });
+  }
+
+  assignUserToProject(userId: string, projectId: string) {
+    return this.call<UserProjectMapping>('assignUserToProject', {}, { 
+      user_id: userId, 
+      project_id: projectId 
+    });
+  }
+
+  removeUserFromProject(mappingId: string) {
+    return this.call<{ message: string }>('removeUserFromProject', { mapping_id: mappingId });
   }
 
   // ─── Masters ─────────────────────────────────────────────────────────────────
@@ -140,5 +204,23 @@ export class ApiService {
 
   deleteTask(taskId: string) {
     return this.call<{ message: string }>('deleteTask', { task_id: taskId });
+  }
+
+  // ─── User Management ───────────────────────────────────────────────────────────
+
+  getUsers() {
+    return this.call<UserOption[]>('getUsers');
+  }
+
+  createUser(data: { username: string; display_name: string; email: string; password: string; role_id: string; is_active: boolean; created_by: string }) {
+    return this.call<UserOption>('createUser', {}, data);
+  }
+
+  updateUser(data: { user_id: string; username: string; display_name: string; email: string; password?: string; role_id: string; is_active: boolean; last_modified_by: string }) {
+    return this.call<{ message: string }>('updateUser', {}, data);
+  }
+
+  deleteUser(userId: string) {
+    return this.call<{ message: string }>('deleteUser', { user_id: userId });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
@@ -97,6 +97,31 @@ import { ApiService } from '../../../services/api.service';
             <span class="material-symbols-outlined">check_circle</span>
             Tasks
           </a>
+
+          <!-- Administration Menu (only visible to users with ROLE_MANAGE or USER_MANAGE) -->
+          @if (showAdminMenu()) {
+            <div class="mt-4 pt-4 border-t border-slate-200">
+              <p class="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Administration</p>
+              
+              @if (auth.canManageRoles()) {
+                <a routerLink="/admin/roles" routerLinkActive="nav-active"
+                   class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors nav-inactive"
+                   (click)="sidebarOpen.set(false)">
+                  <span class="material-symbols-outlined">shield</span>
+                  Roles & Permissions
+                </a>
+              }
+              
+              @if (auth.canManageUsers()) {
+                <a routerLink="/admin/users" routerLinkActive="nav-active"
+                   class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors nav-inactive"
+                   (click)="sidebarOpen.set(false)">
+                  <span class="material-symbols-outlined">group</span>
+                  Users
+                </a>
+              }
+            </div>
+          }
         </nav>
 
         <!-- User area -->
@@ -148,6 +173,11 @@ import { ApiService } from '../../../services/api.service';
 })
 export class ShellComponent implements OnInit {
   sidebarOpen = signal(true);
+  
+  // Show admin menu if user has any admin permissions
+  showAdminMenu = computed(() => {
+    return this.auth.canManageRoles() || this.auth.canManageUsers();
+  });
 
   constructor(
     public auth: AuthService,

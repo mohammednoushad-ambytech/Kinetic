@@ -5,9 +5,72 @@ export interface SessionUser {
   display_name: string;
   email: string;
   role_id: string;
+  role_name?: string;
 }
 
-// ─── Permissions ───────────────────────────────────────────────────────────────
+// ─── RBAC: Roles ────────────────────────────────────────────────────────────────
+export interface Role {
+  role_id: string;
+  role_name: string;
+  role_description: string;
+  is_active: boolean;
+  is_deleted: boolean;
+  created_by: string;
+  created_on: string;
+}
+
+// ─── RBAC: Permissions ────────────────────────────────────────────────────────────
+export interface Permission {
+  permission_id: string;
+  permission_name: string;
+  permission_code: PermissionCode;
+  permission_description: string;
+}
+
+// Permission codes for type safety
+export type PermissionCode =
+  | 'PROJECT_CREATE'
+  | 'PROJECT_DELETE'
+  | 'PROJECT_UPDATE'
+  | 'TASK_CREATE'
+  | 'TASK_DELETE'
+  | 'TASK_UPDATE'
+  | 'USER_MANAGE'
+  | 'ROLE_MANAGE'
+  | 'VIEW_ALL_PROJECTS'
+  | 'ARTIFACT_MANAGE';
+
+// All available permissions
+export const ALL_PERMISSIONS: PermissionCode[] = [
+  'PROJECT_CREATE',
+  'PROJECT_DELETE',
+  'PROJECT_UPDATE',
+  'TASK_CREATE',
+  'TASK_DELETE',
+  'TASK_UPDATE',
+  'USER_MANAGE',
+  'ROLE_MANAGE',
+  'VIEW_ALL_PROJECTS',
+  'ARTIFACT_MANAGE'
+];
+
+// ─── RBAC: Role-Permission Mapping ────────────────────────────────────────────────
+export interface RolePermissionMapping {
+  mapping_id: string;
+  role_id_fk: string;
+  permission_id_fk: string;
+  permission_code?: PermissionCode;
+}
+
+// ─── User Project Assignment (Simplified) ───────────────────────────────────────
+export interface UserProjectMapping {
+  mapping_id: string;
+  user_id_fk: string;
+  project_id_fk: string;
+  is_active: boolean;
+}
+
+// ─── Legacy Permissions (Deprecated - kept for reference) ───────────────────────
 export interface UserProjectPermission {
   mapping_id: string;
   user_id_fk: string;

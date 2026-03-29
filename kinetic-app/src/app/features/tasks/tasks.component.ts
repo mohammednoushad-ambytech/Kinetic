@@ -25,8 +25,8 @@ import { isOverdue, formatDate, toDateInputValue, todayStr } from '../../utils/d
           <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">Work</p>
           <h2 class="text-3xl font-bold tracking-tight text-on-surface">Task Management</h2>
         </div>
-        <!-- Only show create if user has create perm on at least one project -->
-        @if (canCreateAny()) {
+        <!-- Only show create if user has TASK_CREATE permission -->
+        @if (auth.canCreateTasks()) {
           <button class="btn-primary" (click)="openCreate()">
             <span class="material-symbols-outlined">add</span>
             Create Task
@@ -250,13 +250,13 @@ import { isOverdue, formatDate, toDateInputValue, todayStr } from '../../utils/d
                             class="p-1.5 hover:bg-surface-container rounded-lg transition-colors">
                       <span class="material-symbols-outlined text-sm text-outline hover:text-primary">visibility</span>
                     </button>
-                    @if (auth.canUpdate(t.project_id_fk)) {
+                    @if (auth.canUpdateTasks()) {
                       <button (click)="openEdit(t)" title="Edit"
                               class="p-1.5 hover:bg-surface-container rounded-lg transition-colors">
                         <span class="material-symbols-outlined text-sm text-outline hover:text-primary">edit</span>
                       </button>
                     }
-                    @if (auth.canDelete(t.project_id_fk)) {
+                    @if (auth.canDeleteTasks()) {
                       <button (click)="confirmDelete(t)" title="Delete"
                               class="p-1.5 hover:bg-error-container/30 rounded-lg transition-colors">
                         <span class="material-symbols-outlined text-sm text-outline hover:text-error">delete</span>
@@ -334,13 +334,13 @@ import { isOverdue, formatDate, toDateInputValue, todayStr } from '../../utils/d
                       }
                       <!-- Action buttons (visible on hover) -->
                       <div class="flex items-center gap-1 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        @if (auth.canUpdate(t.project_id_fk)) {
+                        @if (auth.canUpdateTasks()) {
                           <button (click)="$event.stopPropagation(); openEdit(t)"
                                   class="flex-1 text-xs py-1.5 rounded-lg bg-surface-container text-outline hover:text-primary hover:bg-primary/5 transition-colors text-center">
                             Edit
                           </button>
                         }
-                        @if (auth.canDelete(t.project_id_fk)) {
+                        @if (auth.canDeleteTasks()) {
                           <button (click)="$event.stopPropagation(); confirmDelete(t)"
                                   class="p-1.5 rounded-lg bg-surface-container text-outline hover:text-error hover:bg-error-container/30 transition-colors">
                             <span class="material-symbols-outlined text-sm">delete</span>
@@ -548,7 +548,7 @@ import { isOverdue, formatDate, toDateInputValue, todayStr } from '../../utils/d
             <h3 class="font-semibold text-on-surface mt-0.5">{{ selectedTask()?.task_title }}</h3>
           </div>
           <div class="flex items-center gap-2">
-            @if (auth.canUpdate(selectedTask()?.project_id_fk || '')) {
+            @if (auth.canUpdateTasks()) {
               <button (click)="openEdit(selectedTask()!); viewDrawerOpen.set(false)" title="Edit"
                       class="p-2 hover:bg-surface-container-low rounded-lg transition-colors">
                 <span class="material-symbols-outlined text-sm text-outline">edit</span>
@@ -633,7 +633,7 @@ import { isOverdue, formatDate, toDateInputValue, todayStr } from '../../utils/d
             </div>
 
             <!-- Add / Edit artifact form (collapsible) -->
-            @if (auth.canUpdate(selectedTask()?.project_id_fk || '')) {
+            @if (auth.canManageArtifacts()) {
               <div class="mb-4">
                 @if (!taskArtifactFormOpen() && !editingTaskArtifact()) {
                   <button (click)="taskArtifactFormOpen.set(true)"
@@ -720,7 +720,7 @@ import { isOverdue, formatDate, toDateInputValue, todayStr } from '../../utils/d
                       <span class="text-xs text-on-surface-variant">{{ a.artifact_value }}</span>
                     }
                   </div>
-                  @if (auth.canUpdate(selectedTask()?.project_id_fk || '')) {
+                  @if (auth.canManageArtifacts()) {
                     <div class="flex gap-1 flex-shrink-0">
                       <button (click)="editTaskArtifact(a)"
                               class="p-1.5 text-outline hover:text-primary rounded-lg hover:bg-primary-fixed/20 transition-colors">
@@ -840,11 +840,22 @@ export class TasksComponent implements OnInit {
     if (!userId) return;
     this.loading.set(true);
 
+    // Load accessible projects based on RBAC
+    // If user has VIEW_ALL_PROJECTS, load all; otherwise load only assigned
     this.api.getProjects(userId).subscribe({
       next: projects => {
-        this.accessibleProjects.set(projects);
+        // Filter projects based on RBAC
+        const accessible = projects.filter(p => this.auth.canAccessProject(p.project_id));
+        this.accessibleProjects.set(accessible);
         this.api.getTasks(userId).subscribe({
-          next: tasks => { this.tasks.set(tasks); this.applyFilter(); this.loading.set(false); },
+          next: tasks => { 
+            // Filter tasks to only show those from accessible projects
+            const accessibleTaskIds = new Set(accessible.map(p => p.project_id));
+            const filteredTasks = tasks.filter(t => accessibleTaskIds.has(t.project_id_fk));
+            this.tasks.set(filteredTasks); 
+            this.applyFilter(); 
+            this.loading.set(false); 
+          },
           error: (e: Error) => { this.errorMsg.set(e.message); this.loading.set(false); }
         });
       },
@@ -916,9 +927,7 @@ export class TasksComponent implements OnInit {
     this.applyFilter();
   }
 
-  canCreateAny(): boolean {
-    return this.accessibleProjects().some(p => this.auth.canCreate(p.project_id));
-  }
+  // RBAC: Now using auth.canCreateTasks() directly in template
 
   fc(name: string): AbstractControl { return this.form.get(name)!; }
 

@@ -27,10 +27,12 @@ import { formatDate, toDateInputValue } from '../../utils/date.utils';
           <h2 class="text-3xl font-bold tracking-tight text-on-surface">Projects Library</h2>
           <p class="text-on-surface-variant text-sm">Manage projects, timelines, and artifacts.</p>
         </div>
-        <button class="btn-primary" (click)="openCreate()">
-          <span class="material-symbols-outlined">add</span>
-          Create Project
-        </button>
+        @if (auth.canCreateProjects()) {
+          <button class="btn-primary" (click)="openCreate()">
+            <span class="material-symbols-outlined">add</span>
+            Create Project
+          </button>
+        }
       </div>
 
       <!-- Filters -->
@@ -111,7 +113,7 @@ import { formatDate, toDateInputValue } from '../../utils/date.utils';
                             class="p-2 text-outline hover:text-primary rounded-lg hover:bg-primary-fixed/20 transition-colors">
                       <span class="material-symbols-outlined text-lg">task_alt</span>
                     </button>
-                    @if (auth.canUpdate(p.project_id)) {
+                    @if (auth.canUpdateProjects()) {
                       <button title="Edit" (click)="openEdit(p)"
                               class="p-2 text-outline hover:text-primary rounded-lg hover:bg-primary-fixed/20 transition-colors">
                         <span class="material-symbols-outlined text-lg">edit</span>
@@ -121,7 +123,7 @@ import { formatDate, toDateInputValue } from '../../utils/date.utils';
                             class="p-2 text-outline hover:text-primary rounded-lg hover:bg-primary-fixed/20 transition-colors">
                       <span class="material-symbols-outlined text-lg">attachment</span>
                     </button>
-                    @if (auth.canDelete(p.project_id)) {
+                    @if (auth.canDeleteProjects()) {
                       <button title="Delete" (click)="confirmDelete(p)"
                               class="p-2 text-outline hover:text-error rounded-lg hover:bg-error-container/30 transition-colors">
                         <span class="material-symbols-outlined text-lg">delete</span>
@@ -267,7 +269,7 @@ import { formatDate, toDateInputValue } from '../../utils/date.utils';
           <div>
             <div class="flex items-center justify-between mb-2">
               <p class="k-label mb-0">Artifacts</p>
-              @if (auth.canUpdate(selectedProject()?.project_id || '')) {
+              @if (auth.canManageArtifacts()) {
                 <button (click)="viewDrawerOpen.set(false); openArtifacts(selectedProject()!)"
                         class="text-xs text-primary font-semibold hover:underline">Manage</button>
               }

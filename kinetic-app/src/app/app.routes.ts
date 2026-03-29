@@ -24,6 +24,14 @@ export const routes: Routes = [
         path: 'tasks',
         loadComponent: () => import('./features/tasks/tasks.component').then(m => m.TasksComponent),
       },
+      {
+        path: 'admin/roles',
+        loadComponent: () => import('./features/admin/roles.component').then(m => m.RolesComponent),
+      },
+      {
+        path: 'admin/users',
+        loadComponent: () => import('./features/admin/users.component').then(m => m.UsersComponent),
+      },
     ]
   },
   { path: '**', redirectTo: 'dashboard' }
